@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Browser
+import Data.User
 import Html exposing (Html)
 
 

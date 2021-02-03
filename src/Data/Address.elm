@@ -23,3 +23,9 @@ decode =
 
 
 decodeAddress : Decode.Decoder Address
+decodeAddress =
+    Decode.succeed Address
+        |> Pipeline.required "address" Decode.string
+        |> Pipeline.required "city" Decode.string
+        |> Pipeline.required "zip" Decode.string
+        |> Pipeline.required "country" Country.decode

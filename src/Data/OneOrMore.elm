@@ -17,3 +17,6 @@ toModel =
 
 
 decode : Decode.Decoder a -> Decode.Decoder (Model a)
+decode =
+    Decode.oneOrMore Tuple.pair
+        >> Decode.map toModel

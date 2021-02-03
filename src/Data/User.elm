@@ -29,3 +29,18 @@ decode =
 
 
 decoderUserResponse : Decode.Decoder User
+decoderUserResponse =
+    Decode.succeed identity
+        |> Pipeline.required "familyMembers" Family.decode
+        |> Decode.andThen (decodeUser >> Decode.at [ "personalDetails" ])
+
+
+decodeUser : Family.Model -> Decode.Decoder User
+decodeUser family =
+    Decode.succeed User
+        |> Pipeline.required "id" Decode.string
+        |> Pipeline.required "name" Decode.string
+        |> Pipeline.required "bornDate" Date.decode
+        |> Pipeline.required "address" Address.decode
+        |> Pipeline.required "documents" (OneOrMore.decode Document.decode)
+        |> Pipeline.hardcoded family

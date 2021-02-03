@@ -61,6 +61,84 @@ decode =
 
 
 decodeFamily : Decode.Decoder Family
+decodeFamily =
+    Decode.succeed Family
+        |> Pipeline.custom decodeParents
+        |> Pipeline.custom decodeSiblings
+
+
+decodeParents : Decode.Decoder Parents
+decodeParents =
+    Decode.succeed Parents
+        |> Pipeline.custom (decodeParent decodeMother)
+        |> Pipeline.custom (decodeParent decodeFather)
+
+
+decodeParent parentDecoder =
+    Decode.succeed identity
+        |> Pipeline.custom (Decode.list (Decode.maybe parentDecoder))
+        |> Decode.andThen emptyOrOne
+
+
+decodeMother : Decode.Decoder Mother
+decodeMother =
+    decodePerson "mother" Mother
+
+
+decodeFather : Decode.Decoder Father
+decodeFather =
+    decodePerson "father" Father
+
+
+decodeSister : Decode.Decoder Sister
+decodeSister =
+    decodePerson "sister" Sister
+
+
+decodeBrother : Decode.Decoder Brother
+decodeBrother =
+    decodePerson "brother" Brother
+
+
+decodePerson : String -> a -> Decode.Decoder a
+decodePerson relationshipStringMatch person =
+    Decode.succeed identity
+        |> Pipeline.required "relationship" Decode.string
+        |> Decode.andThen
+            (\relationshipString ->
+                if relationshipString == relationshipStringMatch then
+                    Decode.succeed person
+
+                else
+                    Decode.fail "Unknown relationship"
+            )
+
+
+emptyOrOne : List (Maybe a) -> Decode.Decoder (Maybe a)
+emptyOrOne list =
+    case List.filter ((/=) Nothing) list of
+        [] ->
+            Decode.succeed Nothing
+
+        first :: [] ->
+            Decode.succeed first
+
+        _ ->
+            Decode.fail "Can't have 2 or more mothers/fathers"
+
+
+decodeSiblings : Decode.Decoder Siblings
+decodeSiblings =
+    Decode.succeed Tuple.pair
+        |> Pipeline.custom (decodeSibling decodeSister)
+        |> Pipeline.custom (decodeSibling decodeBrother)
+        |> Decode.map toSiblings
+
+
+decodeSibling siblingDecoder =
+    Decode.succeed identity
+        |> Pipeline.custom (Decode.list (Decode.maybe siblingDecoder))
+        |> Decode.map (List.filterMap identity)
 
 
 toSiblings : ( List Sister, List Brother ) -> Siblings

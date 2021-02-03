@@ -19,3 +19,18 @@ decode =
 
 
 decodeCountry : Decode.Decoder Country
+decodeCountry =
+    Decode.map stringToCountry Decode.string
+
+
+stringToCountry : String -> Country
+stringToCountry countryString =
+    case countryString of
+        "CZ" ->
+            CZ
+
+        "SK" ->
+            SK
+
+        _ ->
+            Other
